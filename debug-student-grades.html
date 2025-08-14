@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Student Grades API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .button:hover { background: #005a87; }
+        .result { background: #f5f5f5; padding: 10px; border-radius: 5px; margin: 10px 0; white-space: pre-wrap; font-family: monospace; }
+        .error { background: #ffe6e6; border: 1px solid #ff9999; }
+        .success { background: #e6ffe6; border: 1px solid #99ff99; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Student Grades API Debug Tool</h1>
+        
+        <div class="section">
+            <h3>Test Student Grades API</h3>
+            <input type="text" id="studentId" placeholder="Enter Student ID" value="22043098">
+            <button class="button" onclick="testStudentGrades()">Test Grades API</button>
+            <button class="button" onclick="testStudentCourses()">Test Courses API</button>
+            <button class="button" onclick="checkLocalStorage()">Check LocalStorage</button>
+        </div>
+
+        <div class="section">
+            <h3>API Response:</h3>
+            <div id="apiResult" class="result">Click a button above to test the API...</div>
+        </div>
+
+        <div class="section">
+            <h3>Quick Actions:</h3>
+            <button class="button" onclick="createTestData()">Create Test Student & Course</button>
+            <button class="button" onclick="enrollStudent()">Enroll Student in Course</button>
+            <button class="button" onclick="addTestGrade()">Add Test Grade</button>
+        </div>
+    </div>
+
+    <script>
+        async function testStudentGrades() {
+            const studentId = document.getElementById('studentId').value || '22043098';
+            const resultDiv = document.getElementById('apiResult');
+            
+            try {
+                resultDiv.innerHTML = 'Testing student grades API...';
+                const response = await fetch(`/api/student/grades?studentId=${encodeURIComponent(studentId)}`);
+                const data = await response.json();
+                
+                resultDiv.className = 'result ' + (response.ok ? 'success' : 'error');
+                resultDiv.innerHTML = `Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        async function testStudentCourses() {
+            const studentId = document.getElementById('studentId').value || '22043098';
+            const resultDiv = document.getElementById('apiResult');
+            
+            try {
+                resultDiv.innerHTML = 'Testing student courses API...';
+                const response = await fetch(`/api/student/courses?studentId=${encodeURIComponent(studentId)}&enrolled=true`);
+                const data = await response.json();
+                
+                resultDiv.className = 'result ' + (response.ok ? 'success' : 'error');
+                resultDiv.innerHTML = `Status: ${response.status}
+Response: ${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `Error: ${error.message}`;
+            }
+        }
+
+        function checkLocalStorage() {
+            const resultDiv = document.getElementById('apiResult');
+            const userData = localStorage.getItem('user');
+            
+            if (userData) {
+                const user = JSON.parse(userData);
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `LocalStorage User Data:
+${JSON.stringify(user, null, 2)}`;
+                
+                // Update the input with the actual student ID
+                if (user.studentId) {
+                    document.getElementById('studentId').value = user.studentId;
+                }
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = 'No user data found in localStorage';
+            }
+        }
+
+        async function createTestData() {
+            const resultDiv = document.getElementById('apiResult');
+            
+            try {
+                resultDiv.innerHTML = 'Creating test data...';
+                
+                // Create test course
+                const courseResponse = await fetch('/api/admin/courses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        course_code: 'TEST101',
+                        course_name: 'Test Course for GPA',
+                        credits: 3,
+                        semester: 'Sem 1',
+                        academic_year: '2024',
+                        instructor_name: 'Test Instructor',
+                        department: 'Computer Science',
+                        enrollment_capacity: 50
+                    })
+                });
+                
+                const courseData = await courseResponse.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `Test course created:
+${JSON.stringify(courseData, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `Error creating test data: ${error.message}`;
+            }
+        }
+
+        async function enrollStudent() {
+            const studentId = document.getElementById('studentId').value || '22043098';
+            const resultDiv = document.getElementById('apiResult');
+            
+            try {
+                resultDiv.innerHTML = 'Enrolling student in test course...';
+                
+                const response = await fetch('/api/student/courses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId: studentId,
+                        courseId: 1, // Assuming first course
+                        action: 'enroll'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.className = 'result ' + (response.ok ? 'success' : 'error');
+                resultDiv.innerHTML = `Enrollment result:
+${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `Error enrolling student: ${error.message}`;
+            }
+        }
+
+        async function addTestGrade() {
+            const studentId = document.getElementById('studentId').value || '22043098';
+            const resultDiv = document.getElementById('apiResult');
+            
+            try {
+                resultDiv.innerHTML = 'Adding test grade...';
+                
+                const response = await fetch('/api/admin/grades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        student_id: studentId,
+                        course_id: 1,
+                        enrollment_id: 1,
+                        assignment_name: 'Test Assignment',
+                        assignment_type: 'exam',
+                        points_earned: 85,
+                        points_possible: 100,
+                        letter_grade: 'B',
+                        semester: 'Sem 1',
+                        academic_year: '2024',
+                        comments: 'Test grade for debugging',
+                        created_by: 'admin'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.className = 'result ' + (response.ok ? 'success' : 'error');
+                resultDiv.innerHTML = `Grade added:
+${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `Error adding grade: ${error.message}`;
+            }
+        }
+
+        // Auto-load localStorage data on page load
+        window.onload = function() {
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html>
